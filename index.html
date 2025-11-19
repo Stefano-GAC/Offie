@@ -4,12 +4,11 @@
   <meta charset="utf-8">
   <title>LearnIT Backoffice - Alumnos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-  <!-- Navbar prueba -->
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <a class="navbar-brand fw-bold" href="#">LearnIT Backoffice</a>
@@ -32,7 +31,7 @@
       <h1 class="h4 mb-0">Listado de alumnos</h1>
       <div class="d-flex align-items-center gap-2">
         <span class="badge text-bg-info" id="totalAlumnos">Total: 0</span>
-        <!-- NUEVO: botón añadir -->
+        <!-- Botón añadir alumno -->
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoAlumnoModal">Añadir alumno</button>
       </div>
     </div>
@@ -114,7 +113,8 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Curso</label>
-                <input type="text" id="editCurso" class="form-control" required>
+                <!-- Select dinámico -->
+                <select id="editCurso" class="form-select" required></select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Estado</label>
@@ -135,7 +135,7 @@
       </div>
     </div>
 
-    <!-- NUEVO: Modal nuevo alumno -->
+    <!-- Modal nuevo alumno -->
     <div class="modal fade" id="nuevoAlumnoModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -155,7 +155,8 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Curso</label>
-                <input type="text" id="newCurso" class="form-control" required>
+                <!-- Select dinámico -->
+                <select id="newCurso" class="form-select" required></select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Estado</label>
@@ -193,7 +194,7 @@
     };
 
     function renderTabla() {
-      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+            const term = document.getElementById('searchInput').value.trim().toLowerCase();
       const filter = document.getElementById('statusFilter').value;
       let lista = getAlumnos();
 
@@ -290,15 +291,32 @@
       new bootstrap.Modal('#detalleAlumnoModal').show();
     }
 
-    // Editar (modal)
+    // Editar alumno con select dinámico
     function editarAlumno(id) {
       const a = getAlumnos().find(x => x.id === id);
+
+      // Rellenar select de cursos
+      const select = document.getElementById('editCurso');
+      const cursos = getCursos();
+      select.innerHTML = '';
+      if(cursos.length === 0){
+        select.innerHTML = '<option value="">No hay cursos creados</option>';
+        select.disabled = true;
+      } else {
+        cursos.forEach(c => {
+          select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+        });
+        select.disabled = false;
+      }
+      select.value = a.curso;
+
+      // Resto de campos
       document.getElementById('editId').value = a.id;
       document.getElementById('editNombre').value = a.nombre;
       document.getElementById('editEmail').value = a.email;
-      document.getElementById('editCurso').value = a.curso;
       document.getElementById('editEstado').value = a.estado;
       document.getElementById('editProgreso').value = a.progreso;
+
       new bootstrap.Modal('#editarAlumnoModal').show();
     }
 
@@ -325,12 +343,12 @@
       bootstrap.Modal.getInstance(document.getElementById('editarAlumnoModal')).hide();
     });
 
-    // NUEVO: añadir alumno
+    // Añadir alumno
     document.getElementById('nuevoAlumnoForm').addEventListener('submit', function(e){
       e.preventDefault();
       const nombre = document.getElementById('newNombre').value.trim();
       const email = document.getElementById('newEmail').value.trim();
-      const curso = document.getElementById('newCurso').value.trim();
+      const curso = document.getElementById('newCurso').value;
       const estado = document.getElementById('newEstado').value;
       const progreso = Number(document.getElementById('newProgreso').value || 0);
 
@@ -349,18 +367,28 @@
       setAlumnos(lista);
       toast('Alumno añadido correctamente','success');
 
-      // limpiar y cerrar
-      document.getElementById('newNombre').value = '';
-      document.getElementById('newEmail').value = '';
-      document.getElementById('newCurso').value = '';
-      document.getElementById('newEstado').value = 'Activo';
-      document.getElementById('newProgreso').value = 0;
-
+      document.getElementById('nuevoAlumnoForm').reset();
       renderTabla();
       bootstrap.Modal.getInstance(document.getElementById('nuevoAlumnoModal')).hide();
     });
 
-    // Eliminar
+    // Rellenar select de cursos dinámicamente al abrir modal nuevo alumno
+    document.getElementById('nuevoAlumnoModal').addEventListener('show.bs.modal', () => {
+      const select = document.getElementById('newCurso');
+      const cursos = getCursos();
+      select.innerHTML = '';
+      if(cursos.length === 0){
+        select.innerHTML = '<option value="">No hay cursos creados</option>';
+        select.disabled = true;
+      } else {
+        cursos.forEach(c => {
+          select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+        });
+        select.disabled = false;
+      }
+    });
+
+    // Eliminar alumno
     function eliminarAlumno(id) {
       const ok = confirm('¿Seguro que deseas eliminar este alumno?');
       if (!ok) return;
@@ -371,7 +399,7 @@
     }
 
     // Init
-    seedIfEmpty(); // Datos de ejemplo
+    seedIfEmpty(); 
     renderTabla();
   </script>
 </body>
