@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LearnIT Backoffice - Cursos activos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">LearnIT Backoffice</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Alumnos</a></li>
+          <li class="nav-item"><a class="nav-link" href="form.html">Nuevo curso</a></li>
+          <li class="nav-item"><a class="nav-link active" href="cursos.html">Cursos activos</a></li>
+          <li class="nav-item"><a class="nav-link" href="galeria.html">Galería</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="row g-3 align-items-center mb-3">
+      <div class="col-md-6">
+        <h1 class="h4 mb-0">Cursos</h1>
+      </div>
+      <div class="col-md-6 text-md-end d-flex gap-3 justify-content-md-end">
+        <div class="card p-2">
+          <div class="small text-muted">Total cursos</div>
+          <div class="h5 mb-0" id="countTotal">0</div>
+        </div>
+        <div class="card p-2">
+          <div class="small text-muted">Activos</div>
+          <div class="h5 mb-0" id="countActivos">0</div>
+        </div>
+        <div class="card p-2">
+          <div class="small text-muted">Alumnos (total)</div>
+          <div class="h5 mb-0" id="countAlumnos">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <select id="categoriaFilter" class="form-select">
+          <option value="">Todas las categorías</option>
+          <option value="Programación">Programación</option>
+          <option value="Diseño">Diseño</option>
+          <option value="Marketing">Marketing</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select id="ordenSelect" class="form-select">
+          <option value="alumnos_desc">Ordenar: Alumnos (desc)</option>
+          <option value="alumnos_asc">Alumnos (asc)</option>
+          <option value="duracion_desc">Duración (desc)</option>
+          <option value="duracion_asc">Duración (asc)</option>
+        </select>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <button class="btn btn-outline-secondary" id="resetCursos">Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Tarjetas -->
+    <div class="row g-3" id="cursosGrid"></div>
+
+    <!-- Alertas -->
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+  </main>
+
+  <!-- Bootstrap + App -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    function renderCursos() {
+      let lista = getCursos();
+      document.getElementById('countTotal').innerText = lista.length;
+      document.getElementById('countActivos').innerText = lista.filter(c=>c.activo).length;
+      document.getElementById('countAlumnos').innerText = lista.reduce((sum,c)=>sum+(c.alumnos||0),0);
+
+      const cat = document.getElementById('categoriaFilter').value;
+      if (cat) lista = lista.filter(c => (c.categorias||[]).includes(cat));
+
+      const order = document.getElementById('ordenSelect').value;
+      const sorters = {
+        'alumnos_desc': (a,b)=> (b.alumnos||0)-(a.alumnos||0),
+        'alumnos_asc' : (a,b)=> (a.alumnos||0)-(b.alumnos||0),
+        'duracion_desc': (a,b)=> (b.duracion||0)-(a.duracion||0),
+        'duracion_asc' : (a,b)=> (a.duracion||0)-(b.duracion||0),
+      };
+      lista.sort(sorters[order]);
+
+      const grid = document.getElementById('cursosGrid');
+      grid.innerHTML = lista.map(c => `
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h5 class="card-title">${c.nombre}</h5>
+                <span class="badge text-bg-${c.activo?'success':'secondary'}">${c.activo?'Activo':'Inactivo'}</span>
+              </div>
+              <p class="card-text small text-muted mb-2">${c.descripcion || ''}</p>
+              <div class="mb-2">
+                <span class="badge text-bg-light me-1">${c.nivel}</span>
+                ${(c.categorias||[]).map(cat=>`<span class="badge text-bg-info me-1">${cat}</span>`).join('')}
+              </div>
+              <ul class="list-unstyled mb-3">
+                <li><strong>Profesor:</strong> ${c.profesor}</li>
+                <li><strong>Duración:</strong> ${c.duracion} h</li>
+                <li><strong>Alumnos:</strong> ${c.alumnos || 0}</li>
+                ${c.materialNombre ? `<li><strong>Material:</strong> ${c.materialNombre}</li>`:''}
+              </ul>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleActivo('${c.id}')">
+                  ${c.activo?'Desactivar':'Activar'}
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarCurso('${c.id}')">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleActivo(id) {
+      const lista = getCursos().map(c => c.id===id ? {...c, activo: !c.activo} : c);
+      setCursos(lista);
+      toast('Estado actualizado', 'success');
+      renderCursos();
+    }
+
+    function eliminarCurso(id) {
+      if (!confirm('¿Eliminar curso?')) return;
+      const lista = getCursos().filter(c => c.id!==id);
+      setCursos(lista);
+      toast('Curso eliminado', 'success');
+      renderCursos();
+    }
+
+    document.getElementById('categoriaFilter').addEventListener('change', renderCursos);
+    document.getElementById('ordenSelect').addEventListener('change', renderCursos);
+    document.getElementById('resetCursos').addEventListener('click', () => {
+      document.getElementById('categoriaFilter').value = '';
+      document.getElementById('ordenSelect').value = 'alumnos_desc';
+      renderCursos();
+    });
+
+    seedIfEmpty();
+    renderCursos();
+  </script>
+</body>
+</html>

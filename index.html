@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LearnIT Backoffice - Alumnos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">LearnIT Backoffice</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="index.html">Alumnos</a></li>
+          <li class="nav-item"><a class="nav-link" href="form.html">Nuevo curso</a></li>
+          <li class="nav-item"><a class="nav-link" href="cursos.html">Cursos activos</a></li>
+          <li class="nav-item"><a class="nav-link" href="galeria.html">Galería</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 mb-0">Listado de alumnos</h1>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge text-bg-info" id="totalAlumnos">Total: 0</span>
+        <!-- NUEVO: botón añadir -->
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoAlumnoModal">Añadir alumno</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <input type="search" id="searchInput" class="form-control" placeholder="Buscar por nombre o email...">
+      </div>
+      <div class="col-md-4">
+        <select id="statusFilter" class="form-select">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activo</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <button class="btn btn-outline-secondary" id="resetFilters">Limpiar filtros</button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Curso</th>
+            <th>Estado</th>
+            <th>Progreso</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="alumnosTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <nav>
+      <ul class="pagination justify-content-end" id="pagination"></ul>
+    </nav>
+
+    <!-- Modal detalles -->
+    <div class="modal fade" id="detalleAlumnoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle del alumno</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="detalleAlumnoBody"></div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal edición -->
+    <div class="modal fade" id="editarAlumnoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar alumno</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editarAlumnoForm">
+              <input type="hidden" id="editId">
+              <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" id="editNombre" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" id="editEmail" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Curso</label>
+                <input type="text" id="editCurso" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Estado</label>
+                <select id="editEstado" class="form-select" required>
+                  <option>Activo</option>
+                  <option>Pendiente</option>
+                  <option>Baja</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Progreso (%)</label>
+                <input type="number" id="editProgreso" class="form-control" min="0" max="100" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NUEVO: Modal nuevo alumno -->
+    <div class="modal fade" id="nuevoAlumnoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nuevo alumno</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="nuevoAlumnoForm">
+              <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" id="newNombre" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" id="newEmail" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Curso</label>
+                <input type="text" id="newCurso" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Estado</label>
+                <select id="newEstado" class="form-select" required>
+                  <option value="Activo">Activo</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Progreso (%)</label>
+                <input type="number" id="newProgreso" class="form-control" min="0" max="100" value="0" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Añadir alumno</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+  </main>
+
+  <!-- Bootstrap + App -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let currentPage = 1;
+    const pageSize = 5;
+
+    const renderEstadoBadge = (estado) => {
+      const map = { "Activo": "success", "Pendiente": "warning", "Baja": "secondary" };
+      return `<span class="badge text-bg-${map[estado] || 'light'}">${estado}</span>`;
+    };
+
+    function renderTabla() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filter = document.getElementById('statusFilter').value;
+      let lista = getAlumnos();
+
+      lista = lista.filter(a => {
+        const matchesTerm = (a.nombre + ' ' + a.email).toLowerCase().includes(term);
+        const matchesStatus = filter ? a.estado === filter : true;
+        return matchesTerm && matchesStatus;
+      });
+
+      const total = lista.length;
+      document.getElementById('totalAlumnos').innerText = `Total: ${total}`;
+      const start = (currentPage - 1) * pageSize;
+      const pageItems = lista.slice(start, start + pageSize);
+
+      const tbody = document.getElementById('alumnosTbody');
+      tbody.innerHTML = pageItems.map(a => `
+        <tr>
+          <td>${a.nombre}</td>
+          <td>${a.email}</td>
+          <td>${a.curso}</td>
+          <td>${renderEstadoBadge(a.estado)}</td>
+          <td>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar" role="progressbar" style="width:${a.progreso}%;" aria-valuenow="${a.progreso}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="text-muted">${a.progreso}%</small>
+          </td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="verDetalleAlumno('${a.id}')">Ver</button>
+            <button class="btn btn-sm btn-outline-success me-2" onclick="editarAlumno('${a.id}')">Editar</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarAlumno('${a.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+
+      const pages = Math.ceil(total / pageSize) || 1;
+      currentPage = Math.min(currentPage, pages);
+      const ul = document.getElementById('pagination');
+      ul.innerHTML = `
+        <li class="page-item ${currentPage===1?'disabled':''}">
+          <a class="page-link" href="#" onclick="changePage(${currentPage-1});return false;">Anterior</a>
+        </li>
+        ${Array.from({length: pages}, (_,i)=>`
+          <li class="page-item ${currentPage===i+1?'active':''}">
+            <a class="page-link" href="#" onclick="changePage(${i+1});return false;">${i+1}</a>
+          </li>`).join('')}
+        <li class="page-item ${currentPage===pages?'disabled':''}">
+          <a class="page-link" href="#" onclick="changePage(${currentPage+1});return false;">Siguiente</a>
+        </li>
+      `;
+    }
+
+    function changePage(p) { 
+      currentPage = p; 
+      renderTabla(); 
+    }
+
+    document.getElementById('searchInput').addEventListener('input', () => { 
+      currentPage=1; 
+      renderTabla(); 
+    });
+    document.getElementById('statusFilter').addEventListener('change', () => { 
+      currentPage=1; 
+      renderTabla(); 
+    });
+    document.getElementById('resetFilters').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('statusFilter').value = '';
+      currentPage = 1;
+      renderTabla();
+    });
+
+    // Ver detalle
+    function verDetalleAlumno(id) {
+      const a = getAlumnos().find(x => x.id === id);
+      const body = document.getElementById('detalleAlumnoBody');
+      body.innerHTML = `
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;">
+            ${a.nombre.split(' ').map(s=>s[0]).slice(0,2).join('')}
+          </div>
+          <div>
+            <h6 class="mb-0">${a.nombre}</h6>
+            <small class="text-muted">${a.email}</small>
+          </div>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><strong>Curso:</strong> ${a.curso}</li>
+          <li class="list-group-item"><strong>Estado:</strong> ${a.estado}</li>
+          <li class="list-group-item"><strong>Progreso:</strong> ${a.progreso}%</li>
+          <li class="list-group-item"><strong>Fecha inscripción:</strong> ${a.fecha}</li>
+        </ul>
+      `;
+      new bootstrap.Modal('#detalleAlumnoModal').show();
+    }
+
+    // Editar (modal)
+    function editarAlumno(id) {
+      const a = getAlumnos().find(x => x.id === id);
+      document.getElementById('editId').value = a.id;
+      document.getElementById('editNombre').value = a.nombre;
+      document.getElementById('editEmail').value = a.email;
+      document.getElementById('editCurso').value = a.curso;
+      document.getElementById('editEstado').value = a.estado;
+      document.getElementById('editProgreso').value = a.progreso;
+      new bootstrap.Modal('#editarAlumnoModal').show();
+    }
+
+    document.getElementById('editarAlumnoForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      let lista = getAlumnos();
+      lista = lista.map(a => {
+        if(a.id === id){
+          return {
+            ...a,
+            nombre: document.getElementById('editNombre').value,
+            email: document.getElementById('editEmail').value,
+            curso: document.getElementById('editCurso').value,
+            estado: document.getElementById('editEstado').value,
+            progreso: Number(document.getElementById('editProgreso').value)
+          };
+        }
+        return a;
+      });
+      setAlumnos(lista);
+      toast('Alumno actualizado correctamente','success');
+      renderTabla();
+      bootstrap.Modal.getInstance(document.getElementById('editarAlumnoModal')).hide();
+    });
+
+    // NUEVO: añadir alumno
+    document.getElementById('nuevoAlumnoForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const nombre = document.getElementById('newNombre').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const curso = document.getElementById('newCurso').value.trim();
+      const estado = document.getElementById('newEstado').value;
+      const progreso = Number(document.getElementById('newProgreso').value || 0);
+
+      if(!nombre || !email || !curso) {
+        toast('Completa todos los campos requeridos','warning');
+        return;
+      }
+
+      const lista = getAlumnos();
+      lista.push({
+        id: cryptoRandomId(),
+        nombre, email, curso, estado,
+        progreso,
+        fecha: new Date().toISOString().slice(0,10)
+      });
+      setAlumnos(lista);
+      toast('Alumno añadido correctamente','success');
+
+      // limpiar y cerrar
+      document.getElementById('newNombre').value = '';
+      document.getElementById('newEmail').value = '';
+      document.getElementById('newCurso').value = '';
+      document.getElementById('newEstado').value = 'Activo';
+      document.getElementById('newProgreso').value = 0;
+
+      renderTabla();
+      bootstrap.Modal.getInstance(document.getElementById('nuevoAlumnoModal')).hide();
+    });
+
+    // Eliminar
+    function eliminarAlumno(id) {
+      const ok = confirm('¿Seguro que deseas eliminar este alumno?');
+      if (!ok) return;
+      const lista = getAlumnos().filter(a => a.id !== id);
+      setAlumnos(lista);
+      toast('Alumno eliminado correctamente', 'success');
+      renderTabla();
+    }
+
+    // Init
+    seedIfEmpty(); // Datos de ejemplo
+    renderTabla();
+  </script>
+</body>
+</html>

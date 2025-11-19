@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LearnIT Backoffice - Galería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">LearnIT Backoffice</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Alumnos</a></li>
+          <li class="nav-item"><a class="nav-link" href="form.html">Nuevo curso</a></li>
+          <li class="nav-item"><a class="nav-link" href="cursos.html">Cursos activos</a></li>
+          <li class="nav-item"><a class="nav-link active" href="galeria.html">Galería</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 mb-0">Galería de materiales y eventos</h1>
+      <div>
+        <input type="file" id="fileInput" class="form-control d-inline-block" style="width:280px" accept="image/*">
+        <button class="btn btn-primary ms-2" id="addImageBtn">Añadir imagen</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <input type="search" id="galeriaSearch" class="form-control" placeholder="Buscar por título o etiqueta...">
+      </div>
+      <div class="col-md-4">
+        <select id="galeriaFilter" class="form-select">
+          <option value="">Todas</option>
+          <option value="Evento">Evento</option>
+          <option value="Material">Material</option>
+          <option value="Promoción">Promoción</option>
+        </select>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <button class="btn btn-outline-secondary" id="resetGaleria">Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="row g-3" id="galeriaGrid"></div>
+
+    <!-- Modal lightbox -->
+    <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body p-0">
+            <img id="lightboxImg" src="" alt="" class="w-100">
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <div>
+              <strong id="lightboxTitle"></strong>
+              <div class="small text-muted" id="lightboxDesc"></div>
+            </div>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+  </main>
+
+  <!-- Bootstrap + App -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    function renderGaleria() {
+      const term = document.getElementById('galeriaSearch').value.trim().toLowerCase();
+      const tag = document.getElementById('galeriaFilter').value;
+      let lista = getGaleria();
+
+      lista = lista.filter(i => {
+        const matchesTerm = (i.titulo + ' ' + i.descripcion + ' ' + (i.etiqueta||'')).toLowerCase().includes(term);
+        const matchesTag = tag ? i.etiqueta === tag : true;
+        return matchesTerm && matchesTag;
+      });
+
+      const grid = document.getElementById('galeriaGrid');
+      grid.innerHTML = lista.map(i => `
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <img src="${i.src}" class="card-img-top" style="object-fit:cover;height:160px" alt="${i.titulo}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h6 class="card-title mb-1">${i.titulo}</h6>
+                <span class="badge text-bg-${i.destacado?'warning':'light'}">${i.destacado?'Destacado':'Normal'}</span>
+              </div>
+              <p class="card-text small text-muted">${i.descripcion}</p>
+              ${i.etiqueta? `<span class="badge text-bg-info">${i.etiqueta}</span>`:''}
+            </div>
+            <div class="card-footer d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary" onclick="verImagen('${i.id}')">Ver</button>
+              <button class="btn btn-sm btn-outline-warning" onclick="toggleDestacado('${i.id}')">${i.destacado?'Quitar destacado':'Destacar'}</button>
+              <button class="btn btn-sm btn-outline-danger ms-auto" onclick="eliminarImagen('${i.id}')">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function verImagen(id) {
+      const item = getGaleria().find(x => x.id===id);
+      document.getElementById('lightboxImg').src = item.src;
+      document.getElementById('lightboxTitle').innerText = item.titulo;
+      document.getElementById('lightboxDesc').innerText = item.descripcion;
+      new bootstrap.Modal('#lightboxModal').show();
+    }
+
+    function toggleDestacado(id) {
+      const lista = getGaleria().map(i => i.id===id ? {...i, destacado: !i.destacado} : i);
+      setGaleria(lista);
+      toast('Estado de destacado actualizado', 'success');
+      renderGaleria();
+    }
+
+    function eliminarImagen(id) {
+      if (!confirm('¿Eliminar imagen?')) return;
+      const lista = getGaleria().filter(i => i.id!==id);
+      setGaleria(lista);
+      toast('Imagen eliminada', 'success');
+      renderGaleria();
+    }
+
+    // Añadir imagen desde file input (base64)
+    document.getElementById('addImageBtn').addEventListener('click', async () => {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return toast('Selecciona una imagen primero', 'warning');
+      const base64 = await fileToDataUrl(file);
+      const titulo = prompt('Título de la imagen:', file.name) || 'Nueva imagen';
+      const etiqueta = prompt('Etiqueta (Evento / Material / Promoción):', 'Material') || '';
+      const descripcion = prompt('Descripción:', '') || '';
+      const lista = getGaleria();
+      lista.push({
+        id: cryptoRandomId(),
+        src: base64,
+        titulo, descripcion, etiqueta,
+        destacado: false
+      });
+      setGaleria(lista);
+      toast('Imagen añadida', 'success');
+      document.getElementById('fileInput').value = '';
+      renderGaleria();
+    });
+
+    document.getElementById('galeriaSearch').addEventListener('input', renderGaleria);
+    document.getElementById('galeriaFilter').addEventListener('change', renderGaleria);
+    document.getElementById('resetGaleria').addEventListener('click', () => {
+      document.getElementById('galeriaSearch').value = '';
+      document.getElementById('galeriaFilter').value = '';
+      renderGaleria();
+    });
+
+    seedIfEmpty();
+    renderGaleria();
+  </script>
+</body>
+</html>

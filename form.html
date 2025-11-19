@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LearnIT Backoffice - Nuevo curso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">LearnIT Backoffice</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Alumnos</a></li>
+          <li class="nav-item"><a class="nav-link active" href="form.html">Nuevo curso</a></li>
+          <li class="nav-item"><a class="nav-link" href="cursos.html">Cursos activos</a></li>
+          <li class="nav-item"><a class="nav-link" href="galeria.html">Galería</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <h1 class="h4 mb-3">Crear / editar curso</h1>
+
+    <form id="cursoForm" class="needs-validation" novalidate>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombre del curso</label>
+          <input type="text" name="nombre" class="form-control" required>
+          <div class="invalid-feedback">Ingresa el nombre del curso.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Profesor asignado</label>
+          <select name="profesor" class="form-select" required>
+            <option value="">Selecciona...</option>
+            <option>Juan Pérez</option>
+            <option>María López</option>
+            <option>Esteban García</option>
+          </select>
+          <div class="invalid-feedback">Selecciona un profesor.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Duración (horas)</label>
+          <input type="number" name="duracion" min="1" class="form-control" required>
+          <div class="invalid-feedback">Ingresa una duración válida.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Nivel</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="nivel" value="Básico" required>
+              <label class="form-check-label">Básico</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="nivel" value="Intermedio" required>
+              <label class="form-check-label">Intermedio</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="nivel" value="Avanzado" required>
+              <label class="form-check-label">Avanzado</label>
+            </div>
+          </div>
+          <div class="invalid-feedback d-block">Selecciona un nivel.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Categorías</label>
+          <div class="d-flex flex-wrap gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="categorias" value="Programación">
+              <label class="form-check-label">Programación</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="categorias" value="Diseño">
+              <label class="form-check-label">Diseño</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="categorias" value="Marketing">
+              <label class="form-check-label">Marketing</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label">Descripción</label>
+          <textarea name="descripcion" class="form-control" rows="3" required></textarea>
+          <div class="invalid-feedback">Incluye una descripción.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Materiales (subir archivo)</label>
+          <input type="file" name="materiales" class="form-control" accept=".pdf,.doc,.ppt,.zip,image/*">
+          <div class="form-text">Formatos: PDF, DOC, PPT, ZIP, imágenes.</div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="activo" id="activo">
+            <label class="form-check-label" for="activo">Curso activo</label>
+          </div>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-primary" type="submit">Guardar curso</button>
+          <button class="btn btn-outline-secondary" type="reset">Limpiar</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Alertas -->
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+  </main>
+
+  <!-- Bootstrap + App -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Validación Bootstrap
+    (() => {
+      const form = document.getElementById('cursoForm');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        if (!form.checkValidity()) {
+          toast('Revisa los campos obligatorios.', 'warning');
+          return;
+        }
+
+        const data = new FormData(form);
+        const curso = {
+          id: cryptoRandomId(),
+          nombre: data.get('nombre'),
+          profesor: data.get('profesor'),
+          duracion: Number(data.get('duracion') || 0),
+          nivel: data.get('nivel'),
+          categorias: data.getAll('categorias'),
+          descripcion: data.get('descripcion'),
+          activo: !!data.get('activo'),
+          alumnos: 0,
+          fecha: new Date().toISOString().slice(0,10),
+          materialNombre: (data.get('materiales') && data.get('materiales').name) || ''
+        };
+
+        const lista = getCursos();
+        lista.push(curso);
+        setCursos(lista);
+
+        toast('Curso creado con éxito', 'success');
+        form.reset();
+        form.classList.remove('was-validated');
+      });
+    })();
+  </script>
+</body>
+</html>

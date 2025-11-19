@@ -1,0 +1,12 @@
+/* styles.css */
+.avatar {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.navbar .nav-link.active {
+  font-weight: 600;
+  text-decoration: underline;
+}
+.card .badge {
+  font-size: 0.75rem;
+}
